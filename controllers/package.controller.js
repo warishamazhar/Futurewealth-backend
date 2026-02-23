@@ -2,6 +2,7 @@ const { PackageModel, PackageInvestment } = require("../models/package.model");
 const { UserModel } = require("../models/user.model");
 const { generateCustomId } = require("../utils/generator.uniqueid");
 const { uploadToImageKit } = require("../utils/upload.imagekit");
+const { SUBSCRIPTION } = require("../utils/compensation.config");
 
 exports.PackageCreate = async (req, res) => {
     const { title, minAmount, maxAmount, tags, picture, percentage, status } = req.body;
@@ -194,6 +195,57 @@ exports.getPackageBuyers = async (req, res) => {
 
     } catch (error) {
         console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Subscription Purchase
+ * Allows users to purchase a subscription using their current income balance.
+ * Price and validity are defined in compensation.config.js
+ */
+exports.SubscriptionPurchase = async (req, res) => {
+    try {
+        const user = await UserModel.findById(req.user._id).populate('incomeDetails');
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        
+        // Check for active subscription
+        if (user.subscription?.isActive && user.subscription?.expiryDate > new Date()) {
+            return res.status(400).json({ success: false, message: "Active subscription already exists" });
+        }
+        
+        const incomeDetails = user.incomeDetails;
+        if (!incomeDetails) return res.status(400).json({ success: false, message: "Income details not found" });
+        
+        const currentIncome = incomeDetails.income?.currentIncome || 0;
+        if (currentIncome < SUBSCRIPTION.price) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Insufficient balance. Required: ${SUBSCRIPTION.price} USDT` 
+            });
+        }
+        
+        // Deduct subscription price
+        incomeDetails.income.currentIncome -= SUBSCRIPTION.price;
+        
+        // Set subscription with validity from config
+        user.subscription = {
+            isActive: true,
+            expiryDate: new Date(Date.now() + SUBSCRIPTION.validityDays * 24 * 60 * 60 * 1000)
+        };
+        
+        await incomeDetails.save();
+        await user.save();
+        
+        res.status(200).json({ 
+            success: true, 
+            message: "Subscription purchased successfully",
+            data: { 
+                expiryDate: user.subscription.expiryDate,
+                amountDeducted: SUBSCRIPTION.price
+            }
+        });
+    } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };

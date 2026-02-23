@@ -2,6 +2,7 @@ const { RewardModel } = require("../models/reward.model");
 const { UserModel } = require("../models/user.model");
 const { generateCustomId } = require("../utils/generator.uniqueid");
 const { uploadToImageKit } = require("../utils/upload.imagekit");
+const { getUserRankAchievements, RANKS } = require("../utils/rankReward");
 
 exports.RewardCreate = async (req, res) => {
     const { title, investment, reward,percentage, status,picture,type } = req.body;
@@ -120,6 +121,35 @@ exports.RewardsGlobalAcheiversUpdate = async (req, res) => {
         if(type) rewardFind.type = type;
         await rewardFind.save();
         res.status(200).json({ success: true, message: 'Reward updated successfully', data: rewardFind });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+}
+
+exports.getUserRankStatus = async (req, res) => {
+    try {
+        const rankData = await getUserRankAchievements(req.user._id);
+        if (!rankData) {
+            return res.status(500).json({ success: false, message: 'Error fetching rank data' });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'User rank status retrieved successfully',
+            data: rankData
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+}
+
+exports.getAllRanks = async (req, res) => {
+    try {
+        res.status(200).json({
+            success: true,
+            message: 'All ranks retrieved successfully',
+            data: RANKS
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }

@@ -48,6 +48,11 @@ router.get('/get-tradingprofit-history',isLoggedIn,UserController.getTradingProf
 router.get('/get-globalachiever-history',isLoggedIn,UserController.getGlobalAchieverIncomes);
 router.get('/get-matching-history',isLoggedIn,UserController.getMatchingIncomes);
 router.get('/get-referralincome-history',isLoggedIn,UserController.getReferralIncomes);
+router.get('/get-firststepbonus-history',isLoggedIn,UserController.getFirstStepBonus);
+router.get('/get-powerbonus-history',isLoggedIn,UserController.getPowerBonus);
+router.get('/get-powerinfinitybonus-history',isLoggedIn,UserController.getPowerInfinityBonus);
+router.get('/get-futurewealthcreationbonus-history',isLoggedIn,UserController.getFutureWealthCreationBonus);
+router.get('/get-tradingprofitshare-history',isLoggedIn,UserController.getTradingProfitShare);
 router.get('/get-rankreward-history',isLoggedIn,UserController.getRankRewardIncomes);
 // ------------  FOUR TYPE INCOMES END ----------------
 

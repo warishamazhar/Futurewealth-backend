@@ -13,6 +13,10 @@ const transactionSchema = new mongoose.Schema({
         type:Number,
         default:0
     },
+    royaltyDeduction:{
+        type:Number,
+        default:0
+    },
     netAmount:{
         type:Number,
         default:0

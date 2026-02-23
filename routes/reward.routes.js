@@ -15,5 +15,8 @@ router.get('/get-global-acheivers',isAdminLoggedIn,RewardController.RewardsGloba
 router.put('/update-global-acheivers/:id',isAdminLoggedIn,RewardController.RewardsGlobalAcheiversUpdate);
 router.put('/status-global-acheivers/:id',isAdminLoggedIn,RewardController.RewardsGlobalAcheiversStatusUpdate);
 
+router.get('/get-user-rank-status',isLoggedIn,RewardController.getUserRankStatus);
+router.get('/get-all-ranks',RewardController.getAllRanks);
+
 
 module.exports = router;

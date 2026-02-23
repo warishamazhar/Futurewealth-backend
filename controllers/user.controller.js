@@ -243,6 +243,91 @@ exports.getReferralIncomes = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.getFirstStepBonus = async (req, res) => {
+  try {
+    const history = await CommissionIncome.find({
+      user: req.user._id,
+      type: "FIRST_STEP_BONUS",
+    }).populate([{ path: "user fromUser", select: "id account username" }]);
+    const totalIncome = history.reduce((sum, item) => sum + item.income, 0);
+    res.status(200).json({
+      success: true,
+      message: "First Step Bonus Reports",
+      data: { history, totalIncome, count: history.length },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getPowerBonus = async (req, res) => {
+  try {
+    const history = await CommissionIncome.find({
+      user: req.user._id,
+      type: "POWER_BONUS",
+    }).populate([{ path: "user fromUser", select: "id account username" }]);
+    const totalIncome = history.reduce((sum, item) => sum + item.income, 0);
+    res.status(200).json({
+      success: true,
+      message: "Power Bonus Reports",
+      data: { history, totalIncome, count: history.length },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getPowerInfinityBonus = async (req, res) => {
+  try {
+    const history = await CommissionIncome.find({
+      user: req.user._id,
+      type: "POWER_INFINITY_BONUS",
+    }).populate([{ path: "user", select: "id account username" }]);
+    const totalIncome = history.reduce((sum, item) => sum + item.income, 0);
+    res.status(200).json({
+      success: true,
+      message: "Power Infinity Bonus Reports",
+      data: { history, totalIncome, count: history.length },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getFutureWealthCreationBonus = async (req, res) => {
+  try {
+    const history = await CommissionIncome.find({
+      user: req.user._id,
+      type: "FUTURE_WEALTH_CREATION_BONUS",
+    }).populate([{ path: "user", select: "id account username" }]);
+    const totalIncome = history.reduce((sum, item) => sum + item.income, 0);
+    res.status(200).json({
+      success: true,
+      message: "Future Wealth Creation Bonus Reports",
+      data: { history, totalIncome, count: history.length },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getTradingProfitShare = async (req, res) => {
+  try {
+    const history = await CommissionIncome.find({
+      user: req.user._id,
+      type: "TRADING_PROFIT_SHARE",
+    }).populate([{ path: "user fromUser", select: "id account username" }]);
+    const totalIncome = history.reduce((sum, item) => sum + item.income, 0);
+    res.status(200).json({
+      success: true,
+      message: "Trading Profit Share Reports",
+      data: { history, totalIncome, count: history.length },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 exports.getInvestmentReports = async (req, res) => {
   try {
     const history = await TransactionModel.find({

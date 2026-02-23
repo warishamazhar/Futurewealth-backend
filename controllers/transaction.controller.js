@@ -4,6 +4,8 @@ const { IncomeModel } = require("../models/income.model");
 const { PackageModel } = require("../models/package.model");
 const { TransactionModel } = require("../models/transaction.model");
 const { UserModel } = require("../models/user.model");
+const { RoyaltyPool } = require("../models/royalty.model");
+const { WITHDRAWAL, ROYALTY } = require("../utils/compensation.config");
 const {
   generatorUniqueId,
   generateCustomId,
@@ -175,14 +177,17 @@ exports.WalletWithdrawalRequest = async (req, res) => {
     const amountNumber = Number(amount);
 
     // Minimum and maximum withdrawal checks
-    if (amountNumber < 10)
-      return res
-        .status(403)
-        .json({ success: false, message: "Minimum withdrawal amount is $10." });
-    if (amountNumber > 500)
-      return res
-        .status(403)
-        .json({ success: false, message: "Maximum withdrawal amount is $500." });
+   if (amountNumber < WITHDRAWAL.minAmount)
+  return res.status(403).json({
+    success: false,
+    message: `Minimum withdrawal amount is $${WITHDRAWAL.minAmount}.`
+  });
+
+if (amountNumber > WITHDRAWAL.maxAmount)
+  return res.status(403).json({
+    success: false,
+    message: `Maximum withdrawal amount is $${WITHDRAWAL.maxAmount}.`
+  });
 
     // USE NEW WITHDRAWAL INFO FIELDS
     const withdrawableAmount = user.withdrawalInfo?.availableWithdrawalAmount || 0;
@@ -209,9 +214,23 @@ exports.WalletWithdrawalRequest = async (req, res) => {
     }
 
     // Calculate gas fee (4% of total amount)
-    const gasFeePercentage = 4;
+    const gasFeePercentage = WITHDRAWAL.gasFeePercentage;
     const gasFee = (amountNumber * gasFeePercentage) / 100;
-    const netAmount = amountNumber - gasFee;
+    
+    // Calculate royalty deduction (10% of total amount)
+    const royaltyPercentage = ROYALTY.deductionPercentage;
+    const royaltyDeduction = (amountNumber * royaltyPercentage) / 100;
+    
+    const netAmount = amountNumber - gasFee - royaltyDeduction;
+    
+    // Add to royalty pool
+    const currentMonth = new Date().toISOString().slice(0, 7); // Format: "YYYY-MM"
+    let royaltyPool = await RoyaltyPool.findOne({ month: currentMonth });
+    if (!royaltyPool) {
+      royaltyPool = await RoyaltyPool.create({ month: currentMonth, totalAmount: 0 });
+    }
+    royaltyPool.totalAmount += royaltyDeduction;
+    await royaltyPool.save();
 
     // Generate transaction
     const id = await generateCustomId({ prefix: "YMK-TX", min: 10, max: 10 });
@@ -219,11 +238,12 @@ exports.WalletWithdrawalRequest = async (req, res) => {
       id,
       clientAddress: walletAddress,
       mainAddress: process.env.WALLET_ADDRESS,
-      percentage: 10,
+   percentage: ROYALTY.deductionPercentage,
       role: "USER",
       investment: amountNumber, // Total amount requested
       gasFee: gasFee, // Gas fee (4% of total)
-      netAmount: netAmount, // Amount user will receive (total - gas fee)
+      royaltyDeduction: royaltyDeduction, // Royalty deduction (10% of total)
+      netAmount: netAmount, // Amount user will receive (total - gas fee - royalty)
       user: user._id,
       status: "Processing",
       type: "Withdrawal",
@@ -257,6 +277,7 @@ exports.WalletWithdrawalRequest = async (req, res) => {
       data: {
         totalAmount: amountNumber,
         gasFee: gasFee,
+        royaltyDeduction: royaltyDeduction,
         netAmount: netAmount,
         transactionId: newWith._id,
       },

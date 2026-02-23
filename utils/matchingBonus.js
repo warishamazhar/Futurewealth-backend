@@ -1,5 +1,6 @@
 const { UserModel } = require("../models/user.model");
 const { MatchingPairModel } = require("../models/matchingpair.model");
+const { checkRankAchievements } = require("./rankReward");
 
 
 async function calculateMatchingBonus(newUserId, commissionPercentage = 10) {
@@ -16,7 +17,7 @@ async function calculateMatchingBonus(newUserId, commissionPercentage = 10) {
       const rightChild = await UserModel.findById(currentUser.rightChild);
 
       if (leftChild && rightChild) {
-        // check if pair already exists
+        // Check if pair already exists
         const existingPair = await MatchingPairModel.findOne({
           user: currentUser._id,
           left: leftChild._id,
@@ -24,25 +25,33 @@ async function calculateMatchingBonus(newUserId, commissionPercentage = 10) {
         });
 
         if (!existingPair) {
-          // calculate commission
+          // Calculate commission
           const commission = (investmentAmount * commissionPercentage) / 100;
 
-          // create new matching pair
+          // Check if this user should be excluded from first 2 directs
+          const partners = await UserModel.find({ sponsor: currentUser.sponsor }).sort({ createdAt: 1 });
+          const isInFirstTwo = partners.slice(0, 2).some(p => p._id.toString() === currentUser._id.toString());
+          
+          // Create new matching pair
           await MatchingPairModel.create({
             user: currentUser._id,
             left: leftChild._id,
             right: rightChild._id,
             commition: commission,
+            bonusType: isInFirstTwo ? 'MATCHING_BONUS' : 'FUTURE_WEALTH_CREATION_BONUS'
           });
 
-          // update currentUser's wallet/ledger if needed
+          // Update currentUser's wallet/ledger if needed
           currentUser.investment = (currentUser.investment || 0) + commission;
           await currentUser.save();
+          
+          // Check rank achievements after new pair is created
+          await checkRankAchievements(currentUser._id);
         }
       }
 
-      // move up the tree
-      currentUser = currentUser.sponsor;
+      // Move up the tree
+      currentUser = await UserModel.findById(currentUser.sponsor);
       level++;
     }
   } catch (err) {

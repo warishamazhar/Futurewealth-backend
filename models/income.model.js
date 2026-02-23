@@ -120,6 +120,61 @@
                 default: []
             }],
         },
+        firstStepBonus: {
+            income: {
+                type: Number,
+                default: 0
+            },
+            history: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Commission',
+                default: []
+            }],
+        },
+        powerBonus: {
+            income: {
+                type: Number,
+                default: 0
+            },
+            history: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Commission',
+                default: []
+            }],
+        },
+        powerInfinityBonus: {
+            income: {
+                type: Number,
+                default: 0
+            },
+            history: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Commission',
+                default: []
+            }],
+        },
+        futureWealthCreationBonus: {
+            income: {
+                type: Number,
+                default: 0
+            },
+            history: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Commission',
+                default: []
+            }],
+        },
+        tradingProfitShare: {
+            income: {
+                type: Number,
+                default: 0
+            },
+            history: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Commission',
+                default: []
+            }],
+        },
     },{timestamps:true,versionKey:false});
 
     exports.IncomeModel = mongoose.model('IncomeDetails', IncomeSchema);

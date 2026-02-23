@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const matchingPairSchema = new mongoose.Schema({
     left: {
@@ -24,6 +24,11 @@ const matchingPairSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    bonusType: {
+        type: String,
+        enum: ['MATCHING_BONUS', 'POWER_INFINITY_BONUS', 'FUTURE_WEALTH_CREATION_BONUS'],
+        default: 'MATCHING_BONUS'
+    },
 }, { timestamps: true, versionKey: false });
 
-export const MatchingPairModel = mongoose.model('Matching', matchingPairSchema);
+exports.MatchingPairModel = mongoose.model('Matching', matchingPairSchema);

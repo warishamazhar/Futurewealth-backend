@@ -65,7 +65,7 @@ const commissionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['Referral Income', 'Level Income', 'Matching Income', 'Trading Profit Income','Live Trading Income', 'Global Archive Reward', 'Rank Reward'],
+        enum: ['Referral Income', 'Level Income', 'Matching Income', 'Trading Profit Income','Live Trading Income', 'Global Archive Reward', 'Rank Reward', 'FIRST_STEP_BONUS', 'POWER_BONUS', 'POWER_INFINITY_BONUS', 'FUTURE_WEALTH_CREATION_BONUS', 'TRADING_PROFIT_SHARE'],
         default: 'Referral Income'
     },
     status:{

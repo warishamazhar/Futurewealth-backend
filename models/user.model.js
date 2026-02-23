@@ -159,7 +159,25 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Support",
         default: []
-    }]
+    }],
+    subscription: {
+        isActive: {
+            type: Boolean,
+            default: false
+        },
+        expiryDate: {
+            type: Date,
+            default: null
+        }
+    },
+    firstStepBonusCount: {
+        type: Number,
+        default: 0
+    },
+    lastFutureWealthBonusDate: {
+        type: Date,
+        default: null
+    }
 }, { timestamps: true, versionKey: false })
 
 

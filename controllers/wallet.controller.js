@@ -3,6 +3,9 @@ const { UserModel } = require("../models/user.model");
 const { encryptData, decryptData } = require("../utils/encrypt.data");
 const { generateCustomId } = require("../utils/generator.uniqueid");
 const { getToken } = require("../utils/token.generator");
+const { CommissionIncome } = require("../models/commission.model");
+const { calculatePowerInfinityBonus } = require("../utils/powerInfinityBonus");
+const { REFERRAL_BONUSES } = require("../utils/compensation.config");
 
 async function addToSponsorTeam(userId, sponsorId) {
   try {
@@ -105,6 +108,62 @@ exports.WalletRegister = async (req, res) => {
     if (sponsorFind) {
       sponsorFind.partners.push(newUser._id);
       await sponsorFind.save();
+      
+      const sponsorIncome = await IncomeModel.findById(sponsorFind.incomeDetails);
+      if (sponsorIncome) {
+        const partnerCount = sponsorFind.partners.length;
+        
+        /**
+         * FIRST STEP BONUS
+         * Credit configured amount for first 2 direct referrals only
+         * Amount and max count defined in compensation.config.js
+         */
+        if (partnerCount <= REFERRAL_BONUSES.firstStep.maxCount) {
+          const bonusId = generateCustomId({ prefix: "YMK-FSB", min: 14, max: 14 });
+          const firstStepBonus = new CommissionIncome({
+            id: bonusId,
+            user: sponsorFind._id,
+            fromUser: newUser._id,
+            income: REFERRAL_BONUSES.firstStep.amount,
+            type: "FIRST_STEP_BONUS",
+            status: "Completed"
+          });
+          
+          sponsorIncome.income.currentIncome += REFERRAL_BONUSES.firstStep.amount;
+          sponsorIncome.income.totalIncome += REFERRAL_BONUSES.firstStep.amount;
+          sponsorIncome.firstStepBonus.income += REFERRAL_BONUSES.firstStep.amount;
+          sponsorIncome.firstStepBonus.history.push(firstStepBonus._id);
+          sponsorFind.firstStepBonusCount += 1;
+          
+          await firstStepBonus.save();
+        }
+        /**
+         * POWER BONUS
+         * Credit configured amount from 3rd direct referral onward
+         * Amount and start position defined in compensation.config.js
+         */
+        else if (partnerCount >= REFERRAL_BONUSES.power.startFrom) {
+          const bonusId = generateCustomId({ prefix: "YMK-PWR", min: 14, max: 14 });
+          const powerBonus = new CommissionIncome({
+            id: bonusId,
+            user: sponsorFind._id,
+            fromUser: newUser._id,
+            income: REFERRAL_BONUSES.power.amount,
+            type: "POWER_BONUS",
+            status: "Completed"
+          });
+          
+          sponsorIncome.income.currentIncome += REFERRAL_BONUSES.power.amount;
+          sponsorIncome.income.totalIncome += REFERRAL_BONUSES.power.amount;
+          sponsorIncome.powerBonus.income += REFERRAL_BONUSES.power.amount;
+          sponsorIncome.powerBonus.history.push(powerBonus._id);
+          
+          await powerBonus.save();
+        }
+        
+        await sponsorIncome.save();
+        await sponsorFind.save();
+      }
     }
 
     const token = await getToken(newUser);
@@ -117,6 +176,8 @@ exports.WalletRegister = async (req, res) => {
     // Add to sponsor team hierarchy if referral exists
     if (sponsorFind) {
       await addToSponsorTeam(newUser._id, sponsorFind._id);
+      // Calculate Power Infinity Bonus
+      await calculatePowerInfinityBonus(newUser._id);
     }
 
     res.cookie("ymk", token, {

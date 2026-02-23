@@ -11,6 +11,7 @@ router.get('/get-admin-reports',isAdminLoggedIn,PackageController.PackagesAdminR
 router.get('/get-package-buyers',isAdminLoggedIn,PackageController.getPackageBuyers);
 router.get('/get-packages',isLoggedIn,PackageController.PackagesClientReports);
 router.get('/get-all-packages',PackageController.PackagesAllReports);
+router.post('/purchase-subscription',isLoggedIn,PackageController.SubscriptionPurchase);
 
 
 module.exports = router;
